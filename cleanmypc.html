@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CleanMyPC 2007</title>
+  <style>
+    body {
+      background: linear-gradient(to bottom, #d4d4d4, #a0a0a0);
+      font-family: Tahoma, sans-serif;
+      padding: 40px;
+      color: #222;
+      text-align: center;
+    }
+    #window {
+      background: #f0f0f0;
+      border: 3px solid #888;
+      width: 500px;
+      margin: auto;
+      padding: 20px;
+      box-shadow: 3px 3px #444;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    #output {
+      background: #000;
+      color: #0f0;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      height: 200px;
+      text-align: left;
+      overflow-y: auto;
+      padding: 10px;
+      border: 2px inset #ccc;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 25px;
+      font-weight: bold;
+      background: #58a;
+      color: white;
+      border: none;
+      cursor: pointer;
+      box-shadow: 2px 2px #333;
+    }
+    button:hover {
+      background: #47f;
+    }
+    #progress-container {
+      width: 100%;
+      background: #ddd;
+      margin-top: 20px;
+    }
+    #progress-bar {
+      width: 0;
+      height: 20px;
+      background: #58a;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .animated-icon {
+      width: 50px;
+      height: 50px;
+      margin: 10px auto;
+      animation: spin 2s linear infinite;
+    }
+
+    body.win95 {
+      background: #008080;
+      color: #000;
+      font-family: 'MS Sans Serif', sans-serif;
+    }
+
+    body.winXP {
+      background: linear-gradient(to bottom, #1c5db6, #87ceeb);
+      color: #fff;
+      font-family: 'Tahoma', sans-serif;
+    }
+
+    body.win7 {
+      background: linear-gradient(to bottom, #4a90e2, #d9e8fc);
+      color: #333;
+      font-family: 'Segoe UI', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="window">
+    <h1>🧼 CleanMyPC 2007</h1>
+    <div id="theme-selector">
+      <label for="theme">Select Theme:</label>
+      <select id="theme" onchange="changeTheme(this.value)">
+        <option value="win95">Windows 95</option>
+        <option value="winXP">Windows XP</option>
+        <option value="win7">Windows 7</option>
+      </select>
+    </div>
+    <div id="output">Click “Scan” to clean your PC!</div>
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+    </div>
+    <div id="custom-issue-container">
+      <input type="text" id="customIssue" placeholder="Enter a custom issue...">
+      <button onclick="addCustomIssue()">Add Issue</button>
+    </div>
+    <button onclick="startScan()">Start Scan</button>
+    <button onclick="fakeOptimize('Boost RAM')">Boost RAM</button>
+    <button onclick="fakeOptimize('Defrag Disk')">Defrag Disk</button>
+    <button onclick="fakeOptimize('Optimize Internet Speed')">Optimize Internet Speed</button>
+  </div>
+
+  <audio id="scanSound" src="scan-sound.mp3"></audio>
+  <audio id="completeSound" src="complete-sound.mp3"></audio>
+
+  <script>
+    const output = document.getElementById('output');
+    const fakeFindings = [
+      "🦠 Found 2,483 viruses in C:\\System32\\...",
+      "📦 Detected 14 toolbars: Ask, Yahoo, Bing, WeirdBar...",
+      "💾 4.7 GB of junk files in Recycle Bin",
+      "🚫 32 invalid registry entries deleted",
+      "🐌 RAM slowed by background process: 'LOLcatApp.exe'",
+      "🔥 Temp folder contains 98,432 files",
+      "🔊 Detected 12 autoplay MIDI files",
+      "🐛 Trojan detected: Trojan.Win32.OldSchoolVirus",
+      "📶 Weak Wi-Fi signal? Blame cluttered cookies",
+      "😱 Your mouse driver is from 2006!",
+      "💣 Microsoft Word using 600MB RAM — suspicious!",
+      "📁 Found 5 folders named 'New Folder (7)'",
+      "🎯 Defragmented Windows XP wallpaper cache",
+      "📉 Internet speed boosted by deleting memes",
+      "🥴 Replaced Internet Explorer with… something better",
+      "🖥️ Found 3,000 duplicate desktop shortcuts",
+      "📂 Recovered 1.2GB of lost space in 'C:\\Temp'",
+      "🔒 Strengthened firewall against 1998-level threats",
+      "🧹 Cleaned up 5,000 unused DLL files",
+      "📊 Optimized CPU usage by closing 'Clippy.exe'",
+      "🛠️ Fixed 12 broken shortcuts on desktop",
+      "📜 Removed 20MB of old printer drivers",
+      "🖱️ Mouse sensitivity recalibrated for gaming",
+      "📡 Boosted Wi-Fi by removing 10,000 cookies",
+      "🖼️ Deleted 50 blurry screenshots from 'My Pictures'",
+      "🖥️ Removed 1,000 unused desktop icons",
+      "📂 Cleaned up 2GB of temporary files",
+      "🔒 Enhanced security by removing old certificates",
+      "🧹 Cleared 10,000 cache files",
+      "📊 Improved CPU performance by 20%",
+      "🛠️ Fixed 5 broken registry entries",
+      "📜 Removed 15 outdated drivers",
+      "🖱️ Adjusted mouse settings for precision",
+      "📡 Improved Wi-Fi signal strength",
+      "🖼️ Organized 100 random screenshots",
+      "🖥️ Deleted 500 duplicate files",
+      "📂 Recovered 3GB of lost space",
+      "🔒 Updated firewall rules",
+      "🧹 Removed 8,000 unused DLLs",
+      "📊 Optimized background processes",
+      "🛠️ Fixed 10 broken shortcuts",
+      "📜 Removed 25MB of old printer drivers",
+      "🖱️ Calibrated mouse for gaming",
+      "📡 Boosted internet speed by 15%",
+      "🖼️ Deleted 30 blurry photos",
+      "🖥️ Cleaned up desktop clutter",
+      "📂 Recovered 5GB of space in 'Downloads'"
+    ];
+
+    let easterEggCounter = 0;
+
+    function triggerEasterEgg() {
+      easterEggCounter++;
+      if (easterEggCounter === 5) {
+        const eggMessage = document.createElement('div');
+        eggMessage.textContent = "🎉 You found an Easter Egg! Enjoy your clean PC!";
+        eggMessage.style.background = "#ff0";
+        eggMessage.style.color = "#000";
+        eggMessage.style.padding = "10px";
+        eggMessage.style.margin = "10px 0";
+        eggMessage.style.fontWeight = "bold";
+        document.body.appendChild(eggMessage);
+
+        setTimeout(() => {
+          document.body.removeChild(eggMessage);
+        }, 5000);
+      }
+    }
+
+    function startScan() {
+      output.innerHTML = "";
+      let findings = fakeFindings.sort(() => 0.5 - Math.random()).slice(0, 5);
+      let i = 0;
+      const progressBar = document.getElementById('progress-bar');
+      progressBar.style.width = '0';
+      const interval = setInterval(() => {
+        if (i < findings.length) {
+          output.innerHTML += findings[i] + "<br>";
+          output.scrollTop = output.scrollHeight;
+          progressBar.style.width = `${(i + 1) * 20}%`;
+          i++;
+        } else {
+          clearInterval(interval);
+          output.innerHTML += "<br><strong>✅ Clean complete! PC is now 400% faster!</strong>";
+          progressBar.style.width = '100%';
+        }
+      }, 500);
+    }
+
+    function showFakeError() {
+      const errorMessage = document.createElement('div');
+      errorMessage.textContent = "Error: Critical system failure detected! Resolving...";
+      errorMessage.style.background = "#ff0000";
+      errorMessage.style.color = "#fff";
+      errorMessage.style.padding = "10px";
+      errorMessage.style.margin = "10px 0";
+      errorMessage.style.fontWeight = "bold";
+      document.body.appendChild(errorMessage);
+
+      setTimeout(() => {
+        errorMessage.textContent = "Error resolved! System is stable.";
+        errorMessage.style.background = "#00ff00";
+      }, 3000);
+
+      setTimeout(() => {
+        document.body.removeChild(errorMessage);
+      }, 6000);
+    }
+
+    function addCustomIssue() {
+      const customIssue = document.getElementById('customIssue').value;
+      if (customIssue) {
+        fakeFindings.push(customIssue);
+        document.getElementById('customIssue').value = '';
+      }
+    }
+
+    function saveReport() {
+      const reportContent = document.getElementById('output').innerText;
+      const blob = new Blob([reportContent], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'scan_report.txt';
+      link.click();
+    }
+
+    function changeTheme(theme) {
+      const body = document.body;
+      body.classList.remove('win95', 'winXP', 'win7');
+      body.classList.add(theme);
+    }
+
+    function fakeOptimize(action) {
+      const message = document.createElement('div');
+      message.textContent = `${action} in progress...`;
+      message.style.background = '#000';
+      message.style.color = '#0f0';
+      message.style.padding = '10px';
+      message.style.margin = '10px 0';
+      message.style.fontWeight = 'bold';
+      document.body.appendChild(message);
+
+      setTimeout(() => {
+        message.textContent = `${action} complete! Your PC is now faster!`;
+        message.style.background = '#00ff00';
+      }, 3000);
+
+      setTimeout(() => {
+        document.body.removeChild(message);
+      }, 6000);
+    }
+  </script>
+</body>
+</html>
